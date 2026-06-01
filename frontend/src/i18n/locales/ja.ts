@@ -2,6 +2,7 @@ export default {
   // Navigation
   nav: {
     printers: 'プリンター',
+    cameraWall: 'カメラウォール',
     archives: 'アーカイブ',
     queue: '印刷キュー',
     stats: '統計',

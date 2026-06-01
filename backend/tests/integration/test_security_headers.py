@@ -114,6 +114,22 @@ async def test_default_headers_strict(async_client: AsyncClient, monkeypatch):
 
 @pytest.mark.asyncio
 @pytest.mark.integration
+async def test_camera_page_allows_same_origin_framing(async_client: AsyncClient, monkeypatch):
+    """Camera pages may be framed by Bambuddy's same-origin Camera Wall."""
+    monkeypatch.delenv("TRUSTED_FRAME_ORIGINS", raising=False)
+    from backend.app import main as main_module
+
+    monkeypatch.setattr(main_module, "_TRUSTED_FRAME_ORIGINS", ())
+
+    resp = await async_client.get("/camera/1")
+    assert resp.headers.get("X-Frame-Options") == "SAMEORIGIN"
+    csp = resp.headers.get("Content-Security-Policy", "")
+    assert "frame-ancestors 'self';" in csp
+    assert "'none'" not in csp.split("frame-ancestors")[1].split(";")[0]
+
+
+@pytest.mark.asyncio
+@pytest.mark.integration
 async def test_trusted_origins_relaxes_csp_and_drops_xfo(async_client: AsyncClient, monkeypatch):
     """With env var set: X-Frame-Options is absent, frame-ancestors lists the origins."""
     from backend.app import main as main_module

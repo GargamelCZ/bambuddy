@@ -102,6 +102,15 @@ describe('Layout', () => {
         expect(settingsLink).toBeInTheDocument();
       });
     });
+
+    it('includes camera wall link', async () => {
+      render(<Layout />);
+
+      await waitFor(() => {
+        const cameraWallLink = document.querySelector('a[href="/camera-wall"]');
+        expect(cameraWallLink).toBeInTheDocument();
+      });
+    });
   });
 
   describe('version display', () => {
