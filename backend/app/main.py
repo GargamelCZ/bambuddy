@@ -5183,9 +5183,10 @@ def _frame_ancestors(default_value: str) -> str:
 
     ``default_value`` is the strict directive used when the operator has not
     configured ``TRUSTED_FRAME_ORIGINS`` — typically ``'none'`` (catch-all and
-    docs) or ``'self'`` (gcode-viewer, served same-origin). When trusted origins
-    are configured, ``'self'`` is always included so same-origin embedding never
-    breaks even if an operator forgets to add their own origin to the list.
+    docs) or ``'self'`` (same-origin embedded pages such as /gcode-viewer and
+    /camera/*). When trusted origins are configured, ``'self'`` is always
+    included so same-origin embedding never breaks even if an operator forgets
+    to add their own origin to the list.
     """
     if _TRUSTED_FRAME_ORIGINS:
         return "frame-ancestors 'self' " + " ".join(_TRUSTED_FRAME_ORIGINS) + ";"
@@ -5230,6 +5231,23 @@ async def security_headers_middleware(request, call_next):
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
             "script-src 'self' 'unsafe-eval'; "
+            "style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data: blob:; "
+            "media-src 'self' blob:; "
+            "connect-src 'self' ws: wss:; "
+            "font-src 'self' data:; "
+            "object-src 'none'; "
+            "base-uri 'self'; "
+            "frame-src 'self' http: https:; " + _frame_ancestors("'self'")
+        )
+    elif request.url.path.startswith("/camera/"):
+        # The Camera Wall reuses the standalone camera page in same-origin
+        # iframes so it keeps the printer header, live/snapshot toggle, and
+        # camera controls. Cross-origin embedding still requires the explicit
+        # TRUSTED_FRAME_ORIGINS allowlist.
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            f"script-src 'self' 'nonce-{csp_nonce}'; "
             "style-src 'self' 'unsafe-inline'; "
             "img-src 'self' data: blob:; "
             "media-src 'self' blob:; "

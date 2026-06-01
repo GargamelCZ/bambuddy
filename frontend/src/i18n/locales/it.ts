@@ -2,6 +2,7 @@ export default {
   // Navigation
   nav: {
     printers: 'Stampanti',
+    cameraWall: 'Muro telecamere',
     archives: 'Archivi',
     queue: 'Coda di stampa',
     stats: 'Statistiche',

@@ -2,6 +2,7 @@ export default {
   // Navigation
   nav: {
     printers: '印表機',
+    cameraWall: '攝影機牆',
     archives: '歸檔',
     queue: '列印佇列',
     stats: '統計',

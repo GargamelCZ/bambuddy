@@ -2,6 +2,7 @@ export default {
   // Navigation
   nav: {
     printers: 'Impresoras',
+    cameraWall: 'Muro de cámaras',
     archives: 'Archivos',
     queue: 'Cola de impresión',
     stats: 'Estadísticas',

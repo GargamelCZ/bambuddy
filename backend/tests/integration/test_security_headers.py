@@ -1,9 +1,10 @@
 """Integration tests for security_headers_middleware (#1191).
 
 Default behaviour is strict: ``X-Frame-Options: SAMEORIGIN`` plus
-``frame-ancestors 'none'`` on the catch-all route, ``frame-ancestors 'self'``
-on /gcode-viewer/. Operators can opt into iframe embedding from trusted
-origins (e.g. Home Assistant on a different port) via the
+``frame-ancestors 'none'`` on the catch-all route. Same-origin embedding is
+allowed only on pages Bambuddy intentionally hosts inside its own UI, such as
+/gcode-viewer/ and /camera/*. Operators can opt into iframe embedding from
+trusted origins (e.g. Home Assistant on a different port) via the
 ``TRUSTED_FRAME_ORIGINS`` env var; when set, X-Frame-Options is dropped and
 ``frame-ancestors`` includes the allowlist.
 """
@@ -110,6 +111,22 @@ async def test_default_headers_strict(async_client: AsyncClient, monkeypatch):
     resp = await async_client.get("/api/v1/auth/status")
     assert resp.headers.get("X-Frame-Options") == "SAMEORIGIN"
     assert "frame-ancestors 'none'" in resp.headers.get("Content-Security-Policy", "")
+
+
+@pytest.mark.asyncio
+@pytest.mark.integration
+async def test_camera_page_allows_same_origin_framing(async_client: AsyncClient, monkeypatch):
+    """Camera pages may be framed by Bambuddy's same-origin Camera Wall."""
+    monkeypatch.delenv("TRUSTED_FRAME_ORIGINS", raising=False)
+    from backend.app import main as main_module
+
+    monkeypatch.setattr(main_module, "_TRUSTED_FRAME_ORIGINS", ())
+
+    resp = await async_client.get("/camera/1")
+    assert resp.headers.get("X-Frame-Options") == "SAMEORIGIN"
+    csp = resp.headers.get("Content-Security-Policy", "")
+    assert "frame-ancestors 'self';" in csp
+    assert "'none'" not in csp.split("frame-ancestors")[1].split(";")[0]
 
 
 @pytest.mark.asyncio
